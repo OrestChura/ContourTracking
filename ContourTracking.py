@@ -11,7 +11,7 @@ conts = []
 
 for i in [1, 2]:
 
-    pfluor = cv.imread('Test\\'+name+str(i)+'_'+str(wl)+'.tiff', cv.IMREAD_GRAYSCALE)
+    pfluor = cv.imread('Test\\'+name + str(i) + '_' + str(wl) + '.tiff', cv.IMREAD_GRAYSCALE)
     p0 = cv.imread('Test\\'+name+str(i)+'_0.tiff', cv.IMREAD_GRAYSCALE)
     p = pfluor-p0
     ma1 = np.max(p)
@@ -29,9 +29,13 @@ for i in [1, 2]:
     # cv.imshow('thresh', thsimple)
     # cv.waitKey(0)
 
-    blur = cv.GaussianBlur(p, (5, 5), 0)
-    plt.hist(blur.ravel(), 256)
-    plt.show()
+    blur = cv.GaussianBlur(p, (9, 9), 0)
+    blurshow = (blur * (255 / ma1)).astype(np.uint8)
+    cv.namedWindow('picture1', cv.WINDOW_NORMAL)
+    cv.imshow('picture1', blurshow)
+    cv.waitKey(0)
+    # plt.hist(blur.ravel(), 256)
+    # plt.show()
 
     m, thgauss = cv.threshold(blur, 0, 255, cv.THRESH_BINARY+cv.THRESH_OTSU)
     print(m)
@@ -43,13 +47,17 @@ for i in [1, 2]:
 
     cont, hier = cv.findContours(thgauss, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-    conts.append(cont)
+    conts = conts + cont
 
     cv.namedWindow('contoured', cv.WINDOW_NORMAL)
-    cv.imshow('contoured', cv.drawContours(cv.cvtColor(thgauss, cv.COLOR_GRAY2RGB), cont, -1, (0, 255, 0), 1))
+    cv.imshow('contoured', cv.drawContours(cv.cvtColor(thgauss, cv.COLOR_GRAY2RGB), cont, -1, (0, 255, 0), 2))
     cv.waitKey(0)
 
-nextPts, status, err = cv.calcOpticalFlowPyrLK(picts[0], picts[1], cv.UMatconts[0], conts[0])
+# cv.goodFeaturesToTrack() - функция для отыскания углов
+
+nextPts, status, err = cv.calcOpticalFlowPyrLK(picts[0], picts[1],
+                                               np.float32([tr[-1] for tr in conts[0]]).reshape(-1, 1, 2), None)
 cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
-cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(thgauss, cv.COLOR_GRAY2RGB), nextPts, -1, (0, 255, 0), 1))
+cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(thgauss, cv.COLOR_GRAY2RGB),
+                                          [np.int32(np.around(nextPts))], -1, (0, 0, 255), 2))
 cv.waitKey(0)
