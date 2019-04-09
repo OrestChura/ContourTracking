@@ -91,21 +91,6 @@ for i in range(1, 44):
 # TODO: возможно, использ. эту ф-ю
 # cv.goodFeaturesToTrack() - функция для отыскания углов
 
-cv.namedWindow('contoured', cv.WINDOW_NORMAL)
-cv.imshow('contoured', cv.drawContours(cv.cvtColor(thgauss, cv.COLOR_GRAY2RGB), cont, -1, (0, 255, 0), 3))
-cv.waitKey(0)
-
-nextPts, status, err = cv.calcOpticalFlowPyrLK(picts[0], picts[1],
-                                               np.float32([tr[-1] for tr in conts[0]]).reshape(-1, 1, 2), None)
-cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
-cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(thgauss, cv.COLOR_GRAY2RGB),
-                                          [np.int32(np.around(nextPts))], -1, (0, 0, 255), 3))
-cv.waitKey(0)
-
-# cv.namedWindow('contoured', cv.WINDOW_NORMAL)
-# cv.imshow('contoured', cv.drawContours(cv.cvtColor(pict[24], cv.COLOR_GRAY2RGB), cont, -1, (0, 255, 0), 3))
-# cv.waitKey(0)
-#
 # nextPts, status, err = cv.calcOpticalFlowPyrLK(picts[0], picts[1],
 #                                                np.float32([tr[-1] for tr in conts[0]]).reshape(-1, 1, 2), None)
 # cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
