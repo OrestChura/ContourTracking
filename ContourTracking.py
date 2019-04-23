@@ -1,29 +1,29 @@
 from funcs import *
 
-picts, conts = pictsconts('T', 400, 1, 43)
+picts, threshs, conts = pictsconts('T', 400, 1, 43)
 
 cv.namedWindow('contoured', cv.WINDOW_NORMAL)
-cv.imshow('contoured', cv.drawContours(cv.cvtColor(picts[0], cv.COLOR_GRAY2RGB),
+cv.imshow('contoured', cv.drawContours(cv.cvtColor(threshs[0], cv.COLOR_GRAY2RGB),
                                        list(conts[0]), -1, (0, 255, 0), 3))
 cv.waitKey(0)
 
 cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
-cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(picts[0], cv.COLOR_GRAY2RGB),
+cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(threshs[0], cv.COLOR_GRAY2RGB),
                                           list(conts[0]), -1, (0, 0, 255), 3))
 cv.waitKey(0)
 
 contby = conts[0]
 print(str(1)+': '+str(contby.shape[0]))
-for i in range(1, len(picts) - 1):
+for i in range(1, len(threshs) - 1):
     cv.setWindowTitle('contoured', 'contoured' + str(i+1))
-    cv.imshow('contoured', cv.drawContours(cv.cvtColor(picts[i], cv.COLOR_GRAY2RGB),
+    cv.imshow('contoured', cv.drawContours(cv.cvtColor(threshs[i], cv.COLOR_GRAY2RGB),
                                            list(conts[i]), -1, (0, 255, 0), 3))
     cv.waitKey(0)
 
-    nextpts, status, err = cv.calcOpticalFlowPyrLK(picts[i-1], picts[i],
+    nextpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i-1], threshs[i],
                                                    np.float32([tr[-1] for tr in contby]).reshape(-1, 1, 2), None)
 
-    prevpts, status, err = cv.calcOpticalFlowPyrLK(picts[i], picts[i-1],
+    prevpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i], threshs[i-1],
                                                    np.float32([tr[-1] for tr in nextpts]).reshape(-1, 1, 2), None)
     # TODO: найти оптимальный порог выкидывания точек
     m, diff = cv.threshold(abs((contby - prevpts)).reshape(contby.shape[0], 2), 5, 1, cv.THRESH_BINARY)
@@ -37,7 +37,7 @@ for i in range(1, len(picts) - 1):
     ######
     print(str(i + 1) + ': ' + str(contby.shape[0]))
     cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
-    cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(picts[i], cv.COLOR_GRAY2RGB),
+    cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(threshs[i], cv.COLOR_GRAY2RGB),
                                               [np.int32(np.around(nptcut))], -1, (0, 0, 255), 3))
     cv.waitKey(0)
 
@@ -45,7 +45,7 @@ for i in range(1, len(picts) - 1):
 # TODO: возможно, использ. эту ф-ю
 # cv.goodFeaturesToTrack() - функция для отыскания углов
 
-# nextPts, status, err = cv.calcOpticalFlowPyrLK(picts[0], picts[1],
+# nextPts, status, err = cv.calcOpticalFlowPyrLK(threshs[0], threshs[1],
 #                                                np.float32([tr[-1] for tr in conts[0]]).reshape(-1, 1, 2), None)
 # cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
 # cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(thgauss, cv.COLOR_GRAY2RGB),
