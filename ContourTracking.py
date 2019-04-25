@@ -1,3 +1,6 @@
+import tkinter
+import tkinter.messagebox as mb
+
 from funcs import *
 
 picts, threshs, conts = pictsconts('T', 400, 1, 43)
@@ -37,9 +40,18 @@ for i in range(1, len(threshs) - 1):
     ######
     print(str(i + 1) + ': ' + str(contby.shape[0]))
     cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
-    cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(threshs[i], cv.COLOR_GRAY2RGB),
-                                              [np.int32(np.around(nptcut))], -1, (0, 0, 255), 3))
-    cv.waitKey(0)
+    try:
+        cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(threshs[i], cv.COLOR_GRAY2RGB),
+                                                  [np.int32(np.around(nptcut))], -1, (0, 0, 255), 3))
+        cv.waitKey(0)
+    except Exception:
+        root = tkinter.Tk()
+        ans = mb.showerror('Ошибка', 'Все точки потерялись.',
+                             parent=root)
+        root.destroy()
+        cv.imshow('contoured_by', threshs[i])
+        cv.waitKey(0)
+        break
 
 
 # TODO: возможно, использ. эту ф-ю
