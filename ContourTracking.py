@@ -15,6 +15,8 @@ cv.waitKey(0)
 contby = conts[0]
 print(str(1)+': '+str(contby.shape[0]))
 for i in range(1, len(picts) - 1):
+    if i == 32:
+        break
     cv.setWindowTitle('contoured', 'contoured' + str(i+1))
     cv.imshow('contoured', cv.drawContours(cv.cvtColor(picts[i], cv.COLOR_GRAY2RGB),
                                            list(conts[i]), -1, (0, 255, 0), 3))
