@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 def pictsconts(name, wl, begin, end):
     picts = []
+    threshs = []
     conts = []
     # cv.namedWindow('picture', cv.WINDOW_NORMAL)
     for i in range(begin, end + 1):
@@ -16,7 +17,8 @@ def pictsconts(name, wl, begin, end):
         if ma1 > 252:
             m, p = cv.threshold(p, 252, 255, cv.THRESH_TOZERO_INV)
 
-        # blur = cv.GaussianBlur(p, (5, 5), 0)
+        blur = cv.GaussianBlur(p, (5, 5), 0)
+        picts.append(blur)
         # blurshow = (blur * (255 / ma1)).astype(np.uint8)
         # cv.namedWindow('picture1', cv.WINDOW_NORMAL)
         # cv.imshow('picture1', blurshow)
@@ -24,13 +26,13 @@ def pictsconts(name, wl, begin, end):
         # plt.hist(blur.ravel(), 256)
         # plt.show()
 
-        m, thgauss = cv.threshold(cv.GaussianBlur(p, (5, 5), 0), 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        m, thgauss = cv.threshold(blur, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
         # print(m)
         # cv.namedWindow('threshblur', cv.WINDOW_NORMAL)
         # cv.imshow('threshblur', thgauss)
         # cv.waitKey(0)
 
-        picts.append(thgauss)
+        threshs.append(thgauss)
 
         cont, hier = cv.findContours(thgauss, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
@@ -40,7 +42,7 @@ def pictsconts(name, wl, begin, end):
         # cv.imshow('contoured', cv.drawContours(cv.cvtColor(thgauss, cv.COLOR_GRAY2RGB),
         #                                        list(cont), -1, (0, 255, 0), 3))
         # cv.waitKey(0)
-    return picts, conts
+    return picts, threshs, conts
 
 
 def showpurepicts(name, wl, begin, end):
