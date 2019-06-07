@@ -42,7 +42,7 @@ for i in range(1, len(threshs) - 1):
     cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
     try:
         cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(threshs[i], cv.COLOR_GRAY2RGB),
-                                                  [np.int32(np.around(nptcut))], -1, (0, 0, 255), 3))
+                                                  [contby], -1, (0, 0, 255), 3))
         cv.waitKey(0)
     except Exception:
         root = tkinter.Tk()

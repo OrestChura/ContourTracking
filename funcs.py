@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+# picts, threshs, conts = pictsconts()
 def pictsconts(name, wl, begin, end):
     picts = []
     threshs = []
@@ -45,6 +46,7 @@ def pictsconts(name, wl, begin, end):
     return picts, threshs, conts
 
 
+# None = shppc()
 def showpurepicts(name, wl, begin, end):
     cv.namedWindow('picture', cv.WINDOW_NORMAL)
     for i in range(begin, end + 1):
@@ -66,6 +68,7 @@ def showpurepicts(name, wl, begin, end):
         # plt.show()
 
 
+# None = ()
 def tracktwopicts(picts, conts, num1, num2=None):
     if num2 is None:
         num2 = num1 + 1
