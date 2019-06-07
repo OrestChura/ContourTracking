@@ -17,17 +17,20 @@ cv.waitKey(0)
 
 contby = conts[0]
 print(str(1)+': '+str(contby.shape[0]))
+k = 0
 for i in range(1, len(threshs) - 1):
     cv.setWindowTitle('contoured', 'contoured' + str(i+1))
     cv.imshow('contoured', cv.drawContours(cv.cvtColor(threshs[i], cv.COLOR_GRAY2RGB),
                                            list(conts[i]), -1, (0, 255, 0), 3))
     cv.waitKey(0)
 
-    nextpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i-1], threshs[i],
-                                                   np.float32([tr[-1] for tr in contby]).reshape(-1, 1, 2), None)
+    nextpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i-k-1], threshs[i],
+                                                   np.float32([tr[-1] for tr in contby]).reshape(-1, 1, 2),
+                                                   None, maxLevel=6)
 
-    prevpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i], threshs[i-1],
-                                                   np.float32([tr[-1] for tr in nextpts]).reshape(-1, 1, 2), None)
+    prevpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i], threshs[i-k-1],
+                                                   np.float32([tr[-1] for tr in nextpts]).reshape(-1, 1, 2),
+                                                   np.float32([tr[-1] for tr in contby]).reshape(-1, 1, 2), maxLevel=6)
     # TODO: найти оптимальный порог выкидывания точек
     m, diff = cv.threshold(abs((contby - prevpts)).reshape(contby.shape[0], 2), 5, 1, cv.THRESH_BINARY)
     # TODO: найти способ сделать это с помощью numpy
@@ -36,23 +39,24 @@ for i in range(1, len(threshs) - 1):
     for j in range(diff.shape[0]):
         if diff[j].max() == 0.:
             nptcut.append(nextpts[j])
-    contby = np.int32(np.around(nptcut))
+    contby1 = np.int32(np.around(nptcut))
     ######
-    print(str(i + 1) + ': ' + str(contby.shape[0]))
+    print(str(i + 1) + ': ' + str(contby1.shape[0]))
     cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
     try:
         cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(threshs[i], cv.COLOR_GRAY2RGB),
-                                                  [contby], -1, (0, 0, 255), 3))
+                                                  [contby1], -1, (0, 0, 255), 3))
         cv.waitKey(0)
+        contby = contby1
+        k = 0
     except Exception:
         root = tkinter.Tk()
         ans = mb.showerror('Ошибка', 'Все точки потерялись.',
-                             parent=root)
+                           parent=root)
         root.destroy()
         cv.imshow('contoured_by', threshs[i])
         cv.waitKey(0)
-        break
-
+        k = k + 1
 
 # TODO: возможно, использ. эту ф-ю
 # cv.goodFeaturesToTrack() - функция для отыскания углов
