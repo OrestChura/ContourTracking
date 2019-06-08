@@ -5,7 +5,7 @@ import tkinter
 import tkinter.messagebox as mb
 
 
-# picts, threshs, conts = pictsconts()
+# picts(raw), threshs, conts = pictsconts()
 def pictsconts(name, wl, begin, end):
     picts = []
     threshs = []
@@ -22,7 +22,7 @@ def pictsconts(name, wl, begin, end):
 
         blur = cv.GaussianBlur(p, (5, 5), 0)
         picts.append(blur)
-        # blurshow = (blur * (255 / ma1)).astype(np.uint8)
+        # blurshow = (blur * (255 / np.max(blur))).astype(np.uint8)
         # cv.namedWindow('picture1', cv.WINDOW_NORMAL)
         # cv.imshow('picture1', blurshow)
         # cv.waitKey(0)
@@ -99,32 +99,33 @@ def tracktwopicts(picts, conts, num1, num2=None):
     cv.waitKey(0)
 
 
-#None = ()
-def trackseries(picts, threshs, conts):
+# None = ()
+def trackseries_n_compare(picts, threshs, conts):
     cv.namedWindow('contoured', cv.WINDOW_NORMAL)
     cv.imshow('contoured', cv.drawContours(cv.cvtColor(threshs[0], cv.COLOR_GRAY2RGB),
                                            list(conts[0]), -1, (0, 255, 0), 3))
     cv.waitKey(0)
 
+    # contby = conts[0]
+    contby = np.array(manual_contour((picts[0] * (255 / np.max(picts[0]))).astype(np.uint8))).reshape((-1, 1, 2))
+
     cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
     cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(threshs[0], cv.COLOR_GRAY2RGB),
-                                              list(conts[0]), -1, (0, 0, 255), 3))
+                                              [contby], -1, (0, 0, 255), 3))
     cv.waitKey(0)
-
-    contby = conts[0]
     print(str(1) + ': ' + str(contby.shape[0]))
-    k = 0
+    n_bad_pictures = 0
     for i in range(1, len(threshs) - 1):
         cv.setWindowTitle('contoured', 'contoured' + str(i + 1))
         cv.imshow('contoured', cv.drawContours(cv.cvtColor(threshs[i], cv.COLOR_GRAY2RGB),
                                                list(conts[i]), -1, (0, 255, 0), 3))
         cv.waitKey(0)
 
-        nextpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i - k - 1], threshs[i],
+        nextpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i - n_bad_pictures - 1], threshs[i],
                                                        np.float32([tr[-1] for tr in contby]).reshape(-1, 1, 2),
                                                        None, maxLevel=6)
 
-        prevpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i], threshs[i - k - 1],
+        prevpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i], threshs[i - n_bad_pictures - 1],
                                                        np.float32([tr[-1] for tr in nextpts]).reshape(-1, 1, 2),
                                                        np.float32([tr[-1] for tr in contby]).reshape(-1, 1, 2),
                                                        maxLevel=6)
@@ -145,12 +146,66 @@ def trackseries(picts, threshs, conts):
                                                       [contby1], -1, (0, 0, 255), 3))
             cv.waitKey(0)
             contby = contby1
-            k = 0
+            n_bad_pictures = 0
         except Exception:
             root = tkinter.Tk()
-            ans = mb.showerror('Ошибка', 'Все точки потерялись.',
-                               parent=root)
+            root.withdraw()
+            ans = mb.showerror('Ошибка', 'Все точки потерялись.', parent=root)
             root.destroy()
             cv.imshow('contoured_by', threshs[i])
             cv.waitKey(0)
-            k = k + 1
+            n_bad_pictures = n_bad_pictures + 1
+
+
+# poly = [[x1,y1],...] = man_con()
+def manual_contour(pict):
+    cv.namedWindow('input', cv.WINDOW_NORMAL)
+    cv.moveWindow('input', 1, 1)
+
+    manual_input_parameters = {"color": (0, 255, 0),
+                               "pict": pict.copy(),
+                               "pict_normalized": cv.cvtColor(pict, cv.COLOR_GRAY2RGB),
+                               "poly": [],
+                               # setting up flags
+                               "is_poly_drawing": False,
+                               "is_poly_over": False,
+                               "thickness": 3}
+
+    manual_input_parameters["pict_normalized"] = (manual_input_parameters["pict_normalized"].astype(np.float)
+                                                  / np.max(manual_input_parameters["pict_normalized"])
+                                                  * 255).astype(np.uint8)
+    cv.imshow('input', manual_input_parameters["pict_normalized"])
+
+    def onmouse(event, x, y, flags, param):
+        nonlocal manual_input_parameters
+        # Draw Rectangle
+        if event == cv.EVENT_LBUTTONDOWN:
+            manual_input_parameters["is_poly_drawing"] = True
+            manual_input_parameters["is_poly_over"] = False
+            manual_input_parameters["poly"] = manual_input_parameters["poly"] + [[x, y]]
+        elif event == cv.EVENT_MOUSEMOVE:
+            if manual_input_parameters["is_poly_drawing"] is True:
+                manual_input_parameters["pict"] = manual_input_parameters["pict_normalized"].copy()
+                manual_input_parameters["poly"] = manual_input_parameters["poly"] + [[x, y]]
+                cv.polylines(manual_input_parameters["pict"], [np.array(manual_input_parameters["poly"], np.int32)],
+                             False, manual_input_parameters["color"], manual_input_parameters["thickness"])
+                cv.imshow('input', manual_input_parameters["pict"])
+        elif event == cv.EVENT_LBUTTONUP:
+            manual_input_parameters["is_poly_drawing"] = False
+            manual_input_parameters["is_poly_over"] = True
+            manual_input_parameters["poly"] = manual_input_parameters["poly"] + [[x, y]]
+
+            cv.polylines(manual_input_parameters["pict"],
+                         [np.array(manual_input_parameters["poly"], np.int32)], True,
+                         manual_input_parameters["color"], manual_input_parameters["thickness"])
+
+            cv.imshow('input', manual_input_parameters["pict"])
+        elif event == cv.EVENT_RBUTTONUP:
+            manual_input_parameters["poly"] = []
+            manual_input_parameters["is_poly_over"] = False
+            cv.imshow('input', manual_input_parameters["pict_normalized"])
+
+    cv.setMouseCallback('input', onmouse)
+    cv.waitKey(0)
+    cv.destroyWindow('input')
+    return manual_input_parameters["poly"]

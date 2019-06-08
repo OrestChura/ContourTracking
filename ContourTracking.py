@@ -2,7 +2,8 @@ from funcs import *
 
 picts, threshs, conts = pictsconts('T', 400, 1, 43)
 
-trackseries(picts, threshs, conts)
+trackseries_n_compare(picts, threshs, conts)
+# trackseries(picts, threshs, conts)
 
 # TODO: возможно, использ. эту ф-ю
 # cv.goodFeaturesToTrack() - функция для отыскания углов
