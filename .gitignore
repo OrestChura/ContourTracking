@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+*.orig
 # C extensions
 *.so
 
@@ -81,3 +81,4 @@ celerybeat-schedule
 
 venv/
 Test/
+Python3/
