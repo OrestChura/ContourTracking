@@ -1,6 +1,6 @@
 from funcs import *
 
-picts, threshs, conts = pictsconts('T', 400, 1, 43)
+picts, threshs, conts = pictsconts('Dan', 400, 1, 90)
 
 trackseries_n_compare(picts, threshs, conts)
 # trackseries(picts, threshs, conts)
