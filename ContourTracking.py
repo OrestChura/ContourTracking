@@ -2,7 +2,7 @@ from funcs import *
 
 picts, threshs, conts = pictsconts('Dan', 400, 1, 90)
 
-trackseries_n_compare(picts, threshs, conts)
+trackseries_n_compare(picts, threshs, wsize = (100, 100), maxlvl=6, delta=40, compare=True)
 # trackseries(picts, threshs, conts)
 
 # TODO: возможно, использ. эту ф-ю
