@@ -20,7 +20,7 @@ def pictsconts(name, wl, begin, end):
     #     nonlocal picts
     #     nonlocal threshs
     #     nonlocal conts
-        # cv.namedWindow('picture', cv.WINDOW_NORMAL)
+    #     cv.namedWindow('picture', cv.WINDOW_NORMAL)
     for i in range(begin, end + 1):
         pfluor = cv.imread('Test\\' + name + str(i) + '_' + str(wl) + '.tiff', cv.IMREAD_GRAYSCALE)
         p0 = cv.imread('Test\\' + name + str(i) + '_0.tiff', cv.IMREAD_GRAYSCALE)
@@ -89,37 +89,57 @@ def showrawpicts(name, wl, begin, end):
 
 
 # None = ()
-def tracktwopicts(picts, conts, num1, num2=None):
-    if num2 is None:
-        num2 = num1 + 1
-
-    cv.namedWindow('contoured', cv.WINDOW_NORMAL)
-    cv.imshow('contoured', cv.drawContours(cv.cvtColor(picts[num2], cv.COLOR_GRAY2RGB),
-                                           list(conts[num2]), -1, (0, 255, 0), 3))
-    cv.waitKey(0)
-
-    nextpts, status, err = cv.calcOpticalFlowPyrLK(picts[num1], picts[num2],
-                                                   np.float32([tr[-1] for tr in conts[num1]]).reshape(-1, 1, 2), None)
-
-    prevpts, status, err = cv.calcOpticalFlowPyrLK(picts[num2], picts[num1],
-                                                   np.float32([tr[-1] for tr in nextpts]).reshape(-1, 1, 2), None)
-
-    m, diff = cv.threshold(abs((conts[num1] - prevpts)).reshape(-1, 2), 5, 1, cv.THRESH_BINARY)
-
-    nptcut = []
-    for i in range(diff.shape[0]):
-        if diff[i].max() == 0.:
-            nptcut.append(nextpts[i])
-
-    cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
-    cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(picts[num2], cv.COLOR_GRAY2RGB),
-                                              list(np.int32(np.around(nptcut))), -1, (0, 0, 255), 3))
-    cv.waitKey(0)
+# def tracktwopicts(picts, conts, num1, num2=None):
+#     if num2 is None:
+#         num2 = num1 + 1
+#
+#     # cv.namedWindow('contoured', cv.WINDOW_NORMAL)
+#     # cv.imshow('contoured', cv.drawContours(cv.cvtColor(picts[num2], cv.COLOR_GRAY2RGB),
+#     #                                        list(conts[num2]), -1, (0, 255, 0), 3))
+#     # cv.waitKey(0)
+#
+#     nextpts, status, err = cv.calcOpticalFlowPyrLK(picts[num1], picts[num2],
+#                                                    np.float32([tr[-1] for tr in conts[num1]]).reshape(-1, 1, 2), None)
+#
+#     prevpts, status, err = cv.calcOpticalFlowPyrLK(picts[num2], picts[num1],
+#                                                    np.float32([tr[-1] for tr in nextpts]).reshape(-1, 1, 2), None)
+#
+#     m, diff = cv.threshold(abs((conts[num1] - prevpts)).reshape(-1, 2), 5, 1, cv.THRESH_BINARY)
+#
+#     nptcut = []
+#     for i in range(diff.shape[0]):
+#         if diff[i].max() == 0.:
+#             nptcut.append(nextpts[i])
+#
+#     cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
+#     cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(picts[num2], cv.COLOR_GRAY2RGB),
+#                                               list(np.int32(np.around(nptcut))), -1, (0, 0, 255), 3))
+#     cv.waitKey(0)
 
 
 # None = ()
 # на каждом шаге выводит количество оставшихся точек
-def trackseries_n_compare(picts, threshs, conts):
+
+# cont = tr2p()
+def tracktwopicts(prevthresh, prevcont, nextthresh,  wsize, maxlvl, delta):
+    nextpts, status, err = cv.calcOpticalFlowPyrLK(prevthresh, nextthresh,
+                                                   np.float32([tr[-1] for tr in prevcont]).reshape(-1, 1, 2),
+                                                   None, winSize=wsize, maxLevel=maxlvl)
+
+    prevpts, status, err = cv.calcOpticalFlowPyrLK(nextthresh, prevthresh,
+                                                   np.float32([tr[-1] for tr in nextpts]).reshape(-1, 1, 2),
+                                                   np.float32([tr[-1] for tr in prevcont]).reshape(-1, 1, 2),
+                                                   winSize=wsize, maxLevel=maxlvl)
+
+    m, diff = cv.threshold(
+        np.array([[(i ** 2 + j ** 2) ** (1 / 2)] for [i, j] in abs(prevcont - prevpts).reshape(-1, 2)]),
+        delta, 1, cv.THRESH_BINARY_INV)
+    return np.around([i for (i, j) in zip(nextpts.reshape(-1, 2), diff) if j]).astype(np.int32).reshape((-1, 1, 2))
+
+
+# None = ()
+# def trackseries_n_compare(picts, threshs, conts):
+def trackseries_n_compare(picts, threshs, wsize, maxlvl, delta, compare=False):
     showpicts = [(p * (255 / np.max(p))).astype(np.uint8) for p in picts]
     # cv.namedWindow('contoured', cv.WINDOW_NORMAL)
     # cv.imshow('contoured', cv.drawContours(cv.cvtColor(showpicts[0], cv.COLOR_GRAY2RGB),
@@ -127,7 +147,7 @@ def trackseries_n_compare(picts, threshs, conts):
     # cv.waitKey(0)
 
     # contby = conts[0]
-    contby = np.array(manual_contour((showpicts[0]))).reshape((-1, 1, 2))
+    contby = safecont = firstcont = np.array(manual_contour((showpicts[0]))).reshape((-1, 1, 2))
 
     cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
     cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[0], cv.COLOR_GRAY2RGB),
@@ -139,40 +159,47 @@ def trackseries_n_compare(picts, threshs, conts):
         # cv.imshow('contoured', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
         #                                        list(conts[i]), -1, (0, 255, 0), 3))
         # cv.waitKey(0)
-
-        nextpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i - n_bad_pictures - 1], threshs[i],
-                                                       np.float32([tr[-1] for tr in contby]).reshape(-1, 1, 2),
-                                                       None, winSize=(100, 100), maxLevel=6)
-
-        prevpts, status, err = cv.calcOpticalFlowPyrLK(threshs[i], threshs[i - n_bad_pictures - 1],
-                                                       np.float32([tr[-1] for tr in nextpts]).reshape(-1, 1, 2),
-                                                       np.float32([tr[-1] for tr in contby]).reshape(-1, 1, 2),
-                                                       winSize=(100, 100), maxLevel=6)
-        # TODO: найти оптимальный порог выкидывания точек
-        m, diff = cv.threshold(np.array([[(i**2+j**2)**(1/2)] for [i, j] in abs(contby - prevpts).reshape(-1, 2)]),
-                               40, 1, cv.THRESH_BINARY_INV)
-        contby1 = np.around([i for (i, j) in zip(nextpts.reshape(-1, 2), diff) if j]).astype(np.int32).reshape(-1, 1, 2)
-        # contby1 = np.around(nextpts).astype(np.int32)
-        print(str(i + 1) + ': ' + str(contby1.shape[0]))
+        newcontby = tracktwopicts(threshs[i - n_bad_pictures - 1], contby, threshs[i], wsize, maxlvl, delta)
+        # newcontby = np.around(nextpts).astype(np.int32)
+        print(str(i + 1) + ': ' + str(newcontby.shape[0]))
         cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
 
-        if contby.size <= contby1.size + 5:
+        if contby.size <= newcontby.size + 10:
             cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
-                                                      [contby1], -1, (0, 0, 255), 3))
+                                                      [newcontby], -1, (0, 0, 255), 3))
             cv.waitKey(0)
-            contby = contby1
+            safecont, contby = contby, newcontby
             n_bad_pictures = 0
         else:
-            cv.imshow('contoured_by', showpicts[i])
-            cv.waitKey(0)
-            n_bad_pictures = n_bad_pictures + 1
+            if n_bad_pictures < 4:
+                cv.imshow('contoured_by', showpicts[i])
+                cv.waitKey(0)
+                n_bad_pictures = n_bad_pictures + 1
+            else:
+                newcontby = tracktwopicts(threshs[i - n_bad_pictures - 2], safecont, threshs[i], wsize, maxlvl, delta)
+                if contby.size <= newcontby.size + 10:
+                    cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
+                                                              [newcontby], -1, (0, 0, 255), 3))
+                    cv.waitKey(0)
+                    contby = newcontby
+                    n_bad_pictures = 0
+                else:
+                    root = tkinter.Tk()
+                    root.withdraw()
+                    ans = mb.showerror('Ошибка', 'Контур потерялся. Пожалуйста, введите новый', parent=root)
+                    root.destroy()
+                    contby = safecont = np.array(manual_contour((showpicts[i]))).reshape((-1, 1, 2))
 
-
+                    cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
+                    cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[0], cv.COLOR_GRAY2RGB),
+                                                              [contby], -1, (0, 0, 255), 3))
+                    cv.waitKey(0)
+                    n_bad_pictures = 0
         # try:
         #     cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
-        #                                               [contby1], -1, (0, 0, 255), 3))
+        #                                               [newcontby], -1, (0, 0, 255), 3))
         #     cv.waitKey(0)
-        #     contby = contby1
+        #     contby = newcontby
         #     n_bad_pictures = 0
         # except Exception:
         #     root = tkinter.Tk()
@@ -182,6 +209,11 @@ def trackseries_n_compare(picts, threshs, conts):
         #     cv.imshow('contoured_by', showpicts[i])
         #     cv.waitKey(0)
         #     n_bad_pictures = n_bad_pictures + 1
+    if compare:
+        cv.namedWindow('firstpicture', cv.WINDOW_NORMAL)
+        cv.imshow('firstpicture', cv.drawContours(cv.cvtColor(showpicts[0], cv.COLOR_GRAY2RGB),
+                                                  [firstcont], -1, (0, 0, 255), 3))
+        cv.waitKey(0)
 
 
 # poly = [[x1,y1],...] = man_con()
