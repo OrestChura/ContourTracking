@@ -2,7 +2,7 @@ from funcs import *
 
 picts, threshs, conts = pictsconts('Dan', 400, 1, 90)
 
-trackseries_n_compare(picts, threshs, conts)
+trackseries_n_compare(picts, threshs, wsize=(100, 100), maxlvl=6, delta=40, compare=True)
 # trackseries(picts, threshs, conts)
 
 # TODO: возможно, использ. эту ф-ю
@@ -45,3 +45,10 @@ pass
 #
 #     cv.imshow('picture1', blurshow)
 #     cv.waitKey(0)
+
+
+# m, th = cv.threshold(picts[56], 11, 255, cv.THRESH_TOZERO_INV)
+# cv.namedWindow('14', cv.WINDOW_NORMAL)
+# cv.imshow('14', (th * (255 / np.max(th))).astype(np.uint8))
+# cv.waitKey(0)
+# cv.destroyAllWindows()
