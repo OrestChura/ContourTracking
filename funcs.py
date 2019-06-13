@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tkinter
 import tkinter.messagebox as mb
-from tkinter import ttk
+# from tkinter import ttk
 
 
 # picts(raw), threshs, conts = pictsconts()
@@ -66,8 +66,33 @@ def pictsconts(name, wl, begin, end):
     return picts, threshs, conts
 
 
-# None = shppc()
+# None = shrpc()
 def showrawpicts(name, wl, begin, end):
+    cv.namedWindow('picture', cv.WINDOW_NORMAL)
+    for i in range(begin, end + 1):
+        pfluor = cv.imread('Test\\' + name + str(i) + '_' + str(wl) + '.tiff', cv.IMREAD_GRAYSCALE)
+        p0 = cv.imread('Test\\' + name + str(i) + '_0.tiff', cv.IMREAD_GRAYSCALE)
+        p = pfluor - p0
+        ma1 = np.max(p)
+
+        # if ma1 > 252:
+        #     m, p = cv.threshold(p, 252, 255, cv.THRESH_TOZERO_INV)
+        #     ma1 = np.max(p)
+
+        pshow = (p * (255 / ma1)).astype(np.uint8)
+        cv.imshow('picture', pshow)
+        cv.setWindowTitle('picture', 'picture' + str(i))
+
+        # h = plt.hist(p.ravel(), 256)
+        # plt.show()
+
+        if cv.waitKey(0) == 27:
+            cv.destroyAllWindows()
+            break
+
+
+# None = shp()
+def showpicts(name, wl, begin, end):
     cv.namedWindow('picture', cv.WINDOW_NORMAL)
     for i in range(begin, end + 1):
         pfluor = cv.imread('Test\\' + name + str(i) + '_' + str(wl) + '.tiff', cv.IMREAD_GRAYSCALE)
@@ -79,13 +104,20 @@ def showrawpicts(name, wl, begin, end):
             m, p = cv.threshold(p, 252, 255, cv.THRESH_TOZERO_INV)
             ma1 = np.max(p)
 
-        pshow = (p * (255 / ma1)).astype(np.uint8)
+        blur = cv.GaussianBlur(p, (5, 5), 0)
+        pshow = (blur * (255 / ma1)).astype(np.uint8)
         cv.imshow('picture', pshow)
         cv.setWindowTitle('picture', 'picture' + str(i))
-        cv.waitKey(0)
 
-        # h = plt.hist(p.ravel(), 256)
-        # plt.show()
+        h = cv.calcHist(blur, [0], None, [255], [[0, 255]])
+
+        m, thgauss = cv.threshold(blur, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+        print(m)
+        cv.namedWindow('threshblur', cv.WINDOW_NORMAL)
+        cv.imshow('threshblur', thgauss)
+        if cv.waitKey(0) == 27:
+            cv.destroyAllWindows()
+            break
 
 
 # None = ()
@@ -115,10 +147,8 @@ def showrawpicts(name, wl, begin, end):
 #     cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(picts[num2], cv.COLOR_GRAY2RGB),
 #                                               list(np.int32(np.around(nptcut))), -1, (0, 0, 255), 3))
 #     cv.waitKey(0)
+pass
 
-
-# None = ()
-# на каждом шаге выводит количество оставшихся точек
 
 # cont = tr2p()
 def tracktwopicts(prevthresh, prevcont, nextthresh,  wsize, maxlvl, delta):
@@ -138,6 +168,7 @@ def tracktwopicts(prevthresh, prevcont, nextthresh,  wsize, maxlvl, delta):
 
 
 # None = ()
+# на каждом шаге выводит количество оставшихся точек
 # def trackseries_n_compare(picts, threshs, conts):
 def trackseries_n_compare(picts, threshs, wsize, maxlvl, delta, compare=False):
     showpicts = [(p * (255 / np.max(p))).astype(np.uint8) for p in picts]
@@ -148,7 +179,7 @@ def trackseries_n_compare(picts, threshs, wsize, maxlvl, delta, compare=False):
 
     # contby = conts[0]
     contby = safecont = firstcont = np.array(manual_contour((showpicts[0]))).reshape((-1, 1, 2))
-
+    maximum_tumor = np.max(picts[0])
     cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
     cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[0], cv.COLOR_GRAY2RGB),
                                               [contby], -1, (0, 0, 255), 3))
@@ -159,42 +190,43 @@ def trackseries_n_compare(picts, threshs, wsize, maxlvl, delta, compare=False):
         # cv.imshow('contoured', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
         #                                        list(conts[i]), -1, (0, 255, 0), 3))
         # cv.waitKey(0)
-        newcontby = tracktwopicts(threshs[i - n_bad_pictures - 1], contby, threshs[i], wsize, maxlvl, delta)
-        # newcontby = np.around(nextpts).astype(np.int32)
-        print(str(i + 1) + ': ' + str(newcontby.shape[0]))
-        cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
+        if np.sum(cv.calcHist([picts[i]],[0],None,[256],[0,256])[maximum_tumor+1:])>10:
+            newcontby = tracktwopicts(threshs[i - n_bad_pictures - 1], contby, threshs[i], wsize, maxlvl, delta)
+            # newcontby = np.around(nextpts).astype(np.int32)
+            print(str(i + 1) + ': ' + str(newcontby.shape[0]))
+            cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
 
-        if contby.size <= newcontby.size + 10:
-            cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
-                                                      [newcontby], -1, (0, 0, 255), 3))
-            cv.waitKey(0)
-            safecont, contby = contby, newcontby
-            n_bad_pictures = 0
-        else:
-            if n_bad_pictures < 4:
-                cv.imshow('contoured_by', showpicts[i])
+            if contby.size <= newcontby.size + 10:
+                cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
+                                                          [newcontby], -1, (0, 0, 255), 3))
                 cv.waitKey(0)
-                n_bad_pictures = n_bad_pictures + 1
+                safecont, contby = contby, newcontby
+                n_bad_pictures = 0
             else:
-                newcontby = tracktwopicts(threshs[i - n_bad_pictures - 2], safecont, threshs[i], wsize, maxlvl, delta)
-                if contby.size <= newcontby.size + 10:
-                    cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
-                                                              [newcontby], -1, (0, 0, 255), 3))
+                if n_bad_pictures < 4:
+                    cv.imshow('contoured_by', showpicts[i])
                     cv.waitKey(0)
-                    contby = newcontby
-                    n_bad_pictures = 0
+                    n_bad_pictures = n_bad_pictures + 1
                 else:
-                    root = tkinter.Tk()
-                    root.withdraw()
-                    ans = mb.showerror('Ошибка', 'Контур потерялся. Пожалуйста, введите новый', parent=root)
-                    root.destroy()
-                    contby = safecont = np.array(manual_contour((showpicts[i]))).reshape((-1, 1, 2))
+                    newcontby = tracktwopicts(threshs[i - n_bad_pictures - 2], safecont, threshs[i], wsize, maxlvl, delta)
+                    if contby.size <= newcontby.size + 10:
+                        cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
+                                                                  [newcontby], -1, (0, 0, 255), 3))
+                        cv.waitKey(0)
+                        contby = newcontby
+                        n_bad_pictures = 0
+                    else:
+                        root = tkinter.Tk()
+                        root.withdraw()
+                        ans = mb.showerror('Ошибка', 'Контур потерялся. Пожалуйста, введите новый', parent=root)
+                        root.destroy()
+                        contby = safecont = np.array(manual_contour((showpicts[i]))).reshape((-1, 1, 2))
 
-                    cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
-                    cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[0], cv.COLOR_GRAY2RGB),
-                                                              [contby], -1, (0, 0, 255), 3))
-                    cv.waitKey(0)
-                    n_bad_pictures = 0
+                        cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
+                        cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
+                                                                  [contby], -1, (0, 0, 255), 3))
+                        cv.waitKey(0)
+                        n_bad_pictures = 0
         # try:
         #     cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(showpicts[i], cv.COLOR_GRAY2RGB),
         #                                               [newcontby], -1, (0, 0, 255), 3))
