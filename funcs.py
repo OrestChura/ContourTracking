@@ -262,6 +262,67 @@ def trackseries_n_compare(wsize, maxlvl, delta, name, wl, end, begin=1, compare=
             cv.imwrite('Output\\' + name + str(1) + '_' + str(wl) + '.tiff', imgtoshow)
 
 
+def findKPT(wsize, maxlvl, delta, name, wl, end, n_iterations, begin=1):
+    picts, threshs, conts = pictsconts(name, wl, begin, end)
+    shwpicts = [(p * (255 / np.max(p))).astype(np.uint8) for p in picts]
+    sumKTP = 0
+    for j in range(n_iterations):
+        contby = safecont = firstcont = np.array(manual_contour((shwpicts[0]))).reshape((-1, 1, 2))
+        # maximum_tumor = np.max(picts[0])
+        cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
+        imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[0], cv.COLOR_GRAY2RGB),
+                                    [contby], -1, (0, 0, 255), 3)
+        cv.imshow('contoured_by', imgtoshow)
+        cv.waitKey(1)
+        n_bad_pictures = n_laz_pictures = add_because_lazer = 0
+        for i in range(1, len(threshs) - 1):
+            # cv.setWindowTitle('contoured', 'contoured' + str(i + 1))
+            # cv.imshow('contoured', cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
+            #                                        list(conts[i]), -1, (0, 255, 0), 3))
+            # cv.waitKey(0)
+            cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
+            if np.sum(cv.calcHist([picts[i]], [0], None, [256], [0, 256])[230:]) < 30:
+                newcontby = tracktwopicts(threshs[i - n_bad_pictures - n_laz_pictures - 1], contby, threshs[i],
+                                          wsize, maxlvl, delta)
+                # newcontby = np.around(nextpts).astype(np.int32)
+                # print(str(i + 1) + ': ' + str(newcontby.shape[0]))
+                if contby.size <= newcontby.size + 10:
+                    imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
+                                                [newcontby], -1, (0, 0, 255), 3)
+                    safecont, contby = contby, newcontby
+                    n_bad_pictures = n_laz_pictures = add_because_lazer = 0
+                else:
+                    # if n_bad_pictures < 10 + add_because_lazer:
+                        imgtoshow = shwpicts[i]
+                        n_bad_pictures = n_bad_pictures + 1
+                    # else:
+                    #     newcontby = tracktwopicts(threshs[i - n_bad_pictures - n_laz_pictures - 2], safecont, threshs[i],
+                    #                               wsize, maxlvl, delta)
+                    #     if contby.size <= newcontby.size + 10:
+                    #         imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
+                    #                                     [newcontby], -1, (0, 0, 255), 3)
+                    #         contby = newcontby
+                    #         n_bad_pictures = n_laz_pictures = add_because_lazer = 0
+                    #     else:
+                    #         root = tkinter.Tk()
+                    #         root.withdraw()
+                    #         mb.showerror('Ошибка', 'Контур потерялся. Пожалуйста, введите новый', parent=root)
+                    #         root.destroy()
+                    #         contby = safecont = np.array(manual_contour((shwpicts[i]))).reshape((-1, 1, 2))
+                    #         imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
+                    #                                     [contby], -1, (0, 0, 255), 3)
+                    #         n_bad_pictures = n_laz_pictures = add_because_lazer = 0
+            else:
+                imgtoshow = shwpicts[i]
+                n_laz_pictures = n_laz_pictures + 1
+                add_because_lazer = n_bad_pictures
+            cv.imshow('contoured_by', imgtoshow)
+            cv.waitKey(1)
+        sumKTP += (firstcont.shape[0] - contby.shape[0]) * 100 / firstcont.shape[0]
+        print((firstcont.shape[0] - contby.shape[0]) * 100 / firstcont.shape[0])
+    print('Средний КПТ:', sumKTP/n_iterations, '%')
+
+
 # poly = [[x1,y1],...] = man_con()
 def manual_contour(pict):
     cv.namedWindow('input', cv.WINDOW_NORMAL)
