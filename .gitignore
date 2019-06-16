@@ -82,3 +82,4 @@ celerybeat-schedule
 venv/
 Test/
 Python3/
+Output/
