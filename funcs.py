@@ -179,7 +179,7 @@ def trackseries_n_compare(wsize, maxlvl, delta, name, wl, end, begin=1, compare=
     #                                        list(conts[0]), -1, (0, 255, 0), 3))
     # cv.waitKey(0)
 
-    # contby = conts[0]
+    # contby = safecont = firstcont = conts[0]
     contby = safecont = firstcont = np.array(manual_contour((shwpicts[0]))).reshape((-1, 1, 2))
     # maximum_tumor = np.max(picts[0])
     cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
@@ -190,6 +190,7 @@ def trackseries_n_compare(wsize, maxlvl, delta, name, wl, end, begin=1, compare=
         cv.imwrite('Output\\' + name + str(1) + '_' + str(wl) + '.tiff', imgtoshow)
         cv.waitKey(0)
     n_bad_pictures = n_laz_pictures = add_because_lazer = 0
+    n_s = 0
     for i in range(1, len(threshs) - 1):
         # cv.setWindowTitle('contoured', 'contoured' + str(i + 1))
         # cv.imshow('contoured', cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
@@ -201,7 +202,9 @@ def trackseries_n_compare(wsize, maxlvl, delta, name, wl, end, begin=1, compare=
             newcontby = tracktwopicts(threshs[i - n_bad_pictures - n_laz_pictures - 1], contby, threshs[i],
                                       wsize, maxlvl, delta)
             # newcontby = np.around(nextpts).astype(np.int32)
-            print(str(i + 1) + ': ' + str(newcontby.shape[0]))
+            n_i = (contby.shape[0]-newcontby.shape[0])*100./contby.shape[0]
+            n_s += n_i
+            print(str(i + 1) + ': N_i = ' + str(newcontby.shape[0]) + ', n_i = ' + str(n_i) + ', n_s = ' + str(n_s))
             if contby.size <= newcontby.size + 10:
                 imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
                                             [newcontby], -1, (0, 0, 255), 3)
