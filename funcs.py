@@ -123,36 +123,6 @@ def showpicts(name, wl, begin, end):
             break
 
 
-# None = ()
-# def tracktwopicts(picts, conts, num1, num2=None):
-#     if num2 is None:
-#         num2 = num1 + 1
-#
-#     # cv.namedWindow('contoured', cv.WINDOW_NORMAL)
-#     # cv.imshow('contoured', cv.drawContours(cv.cvtColor(picts[num2], cv.COLOR_GRAY2RGB),
-#     #                                        list(conts[num2]), -1, (0, 255, 0), 3))
-#     # cv.waitKey(0)
-#
-#     nextpts, status, err = cv.calcOpticalFlowPyrLK(picts[num1], picts[num2],
-#                                                    np.float32([tr[-1] for tr in conts[num1]]).reshape(-1, 1, 2), None)
-#
-#     prevpts, status, err = cv.calcOpticalFlowPyrLK(picts[num2], picts[num1],
-#                                                    np.float32([tr[-1] for tr in nextpts]).reshape(-1, 1, 2), None)
-#
-#     m, diff = cv.threshold(abs((conts[num1] - prevpts)).reshape(-1, 2), 5, 1, cv.THRESH_BINARY)
-#
-#     nptcut = []
-#     for i in range(diff.shape[0]):
-#         if diff[i].max() == 0.:
-#             nptcut.append(nextpts[i])
-#
-#     cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
-#     cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(picts[num2], cv.COLOR_GRAY2RGB),
-#                                               list(np.int32(np.around(nptcut))), -1, (0, 0, 255), 3))
-#     cv.waitKey(0)
-pass
-
-
 # cont = tr2p()
 def tracktwopicts(prevthresh, prevcont, nextthresh, wsize, maxlvl, delta):
     nextpts, status, err = cv.calcOpticalFlowPyrLK(prevthresh, nextthresh,
@@ -176,18 +146,10 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
                           compare=False, ):
     picts, threshs, conts = pictsconts(name, wl, begin, end)
     shwpicts = [(p * (255 / np.max(p))).astype(np.uint8) for p in picts]
-    # cv.namedWindow('contoured', cv.WINDOW_NORMAL)
-    # cv.imshow('contoured', cv.drawContours(cv.cvtColor(shwpicts[0], cv.COLOR_GRAY2RGB),
-    #                                        list(conts[0]), -1, (0, 255, 0), 3))
-    # cv.waitKey(0)
-
     cv.namedWindow('thresh', cv.WINDOW_NORMAL)
     cv.imshow('thresh', threshs[0])
     
-    # contby = safecont = firstcont = conts[0]
-
-    contby = safecont = firstcont = np.array(manual_contour((shwpicts[0]))).reshape((-1, 1, 2))
-    # maximum_tumor = np.max(picts[0])
+    contby = safecont = firstcont = conts[0]
     cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
     imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[0], cv.COLOR_GRAY2RGB),
                                 [contby], -1, (0, 0, 255), 3)
@@ -197,21 +159,13 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
         cv.waitKey(0)
     n_bad_pictures = n_laz_pictures = add_because_lazer = 0
     n_sum = 0
+    print(str(1) + ': N_i = ' + str(contby.shape[0]))
     for i in range(1, len(threshs) - 1):
-        # cv.setWindowTitle('contoured', 'contoured' + str(i + 1))
-        # cv.imshow('contoured', cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
-        #                                        list(conts[i]), -1, (0, 255, 0), 3))
-        # cv.waitKey(0)
         cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
-        
-        cv.setWindowTitle('thresh', 'thresh' + str(i + 1))
-        cv.imshow('thresh', threshs[i])
-        
-        # if np.sum(cv.calcHist([picts[i]], [0], None, [256], [0, 256])[maximum_tumor + 1:]) < 30 or if_lazer is False:
+
         if np.sum(cv.calcHist([picts[i]], [0], None, [256], [0, 256])[230:]) < 30:
             newcontby = tracktwopicts(threshs[i - n_bad_pictures - n_laz_pictures - 1], contby, threshs[i],
                                       wsize, maxlvl, delta)
-            # newcontby = np.around(nextpts).astype(np.int32)
             n_i = (contby.shape[0] - newcontby.shape[0]) * 100. / contby.shape[0]
             if contby.size <= newcontby.size + n_dots_out*2:
                 imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
@@ -220,26 +174,8 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
                 n_bad_pictures = n_laz_pictures = add_because_lazer = 0
                 n_sum += n_i
             else:
-                # if n_bad_pictures < max_bad_pictures + add_because_lazer:
                 imgtoshow = shwpicts[i]
                 n_bad_pictures = n_bad_pictures + 1
-                # else:
-                #     newcontby = tracktwopicts(threshs[i - n_bad_pictures - n_laz_pictures - 2], safecont, threshs[i],
-                #                               wsize, maxlvl, delta)
-                #     if contby.size <= newcontby.size + n_dots_out*2:
-                #         imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
-                #                                     [newcontby], -1, (0, 0, 255), 3)
-                #         contby = newcontby
-                #         n_bad_pictures = n_laz_pictures = add_because_lazer = 0
-                #     else:
-                #         root = tkinter.Tk()
-                #         root.withdraw()
-                #         mb.showerror('Ошибка', 'Контур потерялся. Пожалуйста, введите новый', parent=root)
-                #         root.destroy()
-                #         contby = safecont = np.array(manual_contour((shwpicts[i]))).reshape((-1, 1, 2))
-                #         imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
-                #                                     [contby], -1, (0, 0, 255), 3)
-                #         n_bad_pictures = n_laz_pictures = add_because_lazer = 0
             print(str(i + 1) + ': N_i = ' + str(newcontby.shape[0]) + ', n_i = ' + str(n_i) + ', n_s = ' + str(n_sum))
         else:
             imgtoshow = shwpicts[i]
