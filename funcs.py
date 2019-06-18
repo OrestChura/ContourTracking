@@ -171,8 +171,9 @@ def tracktwopicts(prevthresh, prevcont, nextthresh, wsize, maxlvl, delta):
 
 
 # None = ()
-# на каждом шаге выводит количество оставшихся точек
-def trackseries_n_compare(wsize, maxlvl, delta, name, wl, end, begin=1, compare=False, max_bad_pictures=10, n_dots_out=5):
+# на каждом шаге выводит количество оставшихся точек, n_i, n_sum
+def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, name, wl, end, begin=1,
+                          compare=False, ):
     picts, threshs, conts = pictsconts(name, wl, begin, end)
     shwpicts = [(p * (255 / np.max(p))).astype(np.uint8) for p in picts]
     # cv.namedWindow('contoured', cv.WINDOW_NORMAL)
@@ -195,7 +196,7 @@ def trackseries_n_compare(wsize, maxlvl, delta, name, wl, end, begin=1, compare=
         cv.imwrite('Output\\' + name + str(1) + '_' + str(wl) + '.tiff', imgtoshow)
         cv.waitKey(0)
     n_bad_pictures = n_laz_pictures = add_because_lazer = 0
-    n_s = 0
+    n_sum = 0
     for i in range(1, len(threshs) - 1):
         # cv.setWindowTitle('contoured', 'contoured' + str(i + 1))
         # cv.imshow('contoured', cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
@@ -211,14 +212,13 @@ def trackseries_n_compare(wsize, maxlvl, delta, name, wl, end, begin=1, compare=
             newcontby = tracktwopicts(threshs[i - n_bad_pictures - n_laz_pictures - 1], contby, threshs[i],
                                       wsize, maxlvl, delta)
             # newcontby = np.around(nextpts).astype(np.int32)
-            n_i = (contby.shape[0]-newcontby.shape[0])*100./contby.shape[0]
-            n_s += n_i
-            print(str(i + 1) + ': N_i = ' + str(newcontby.shape[0]) + ', n_i = ' + str(n_i) + ', n_s = ' + str(n_s))
+            n_i = (contby.shape[0] - newcontby.shape[0]) * 100. / contby.shape[0]
             if contby.size <= newcontby.size + n_dots_out*2:
                 imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
                                             [newcontby], -1, (0, 0, 255), 3)
                 safecont, contby = contby, newcontby
                 n_bad_pictures = n_laz_pictures = add_because_lazer = 0
+                n_sum += n_i
             else:
                 # if n_bad_pictures < max_bad_pictures + add_because_lazer:
                 imgtoshow = shwpicts[i]
@@ -240,11 +240,13 @@ def trackseries_n_compare(wsize, maxlvl, delta, name, wl, end, begin=1, compare=
                 #         imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
                 #                                     [contby], -1, (0, 0, 255), 3)
                 #         n_bad_pictures = n_laz_pictures = add_because_lazer = 0
+            print(str(i + 1) + ': N_i = ' + str(newcontby.shape[0]) + ', n_i = ' + str(n_i) + ', n_s = ' + str(n_sum))
         else:
             imgtoshow = shwpicts[i]
             n_laz_pictures = n_laz_pictures + 1
             if not add_because_lazer and n_bad_pictures:
                 add_because_lazer = n_bad_pictures
+
         cv.imshow('contoured_by', imgtoshow)
         ans = cv.waitKey(0)
         if ans == BTN_ESC:
@@ -253,20 +255,6 @@ def trackseries_n_compare(wsize, maxlvl, delta, name, wl, end, begin=1, compare=
             cv.imwrite('Output\\' + name + str(i + 1) + '_' + str(wl) + '.tiff', imgtoshow)
             if cv.waitKey(0) == BTN_ESC:
                 break
-        # try:
-        #     cv.imshow('contoured_by', cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
-        #                                               [newcontby], -1, (0, 0, 255), 3))
-        #     cv.waitKey(0)
-        #     contby = newcontby
-        #     n_bad_pictures = 0
-        # except Exception:
-        #     root = tkinter.Tk()
-        #     root.withdraw()
-        #     ans = mb.showerror('Ошибка', 'Все точки потерялись.', parent=root)
-        #     root.destroy()
-        #     cv.imshow('contoured_by', shwpicts[i])
-        #     cv.waitKey(0)
-        #     n_bad_pictures = n_bad_pictures + 1
     if compare:
         cv.namedWindow('firstpicture', cv.WINDOW_NORMAL)
         cv.imshow('firstpicture', cv.drawContours(cv.cvtColor(shwpicts[0], cv.COLOR_GRAY2RGB),
