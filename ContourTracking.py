@@ -1,8 +1,7 @@
 from funcs import *
 
-picts, threshs, conts = pictsconts('Dan', 400, 1, 90)
+trackseries_n_compare(wsize=(90, 90), maxlvl=6, delta=30, compare=True, name='3__3__', wl=400, end=192)
 
-trackseries_n_compare(picts, threshs, wsize=(100, 100), maxlvl=6, delta=40, compare=True)
 # trackseries(picts, threshs, conts)
 
 # TODO: возможно, использ. эту ф-ю
