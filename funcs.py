@@ -152,10 +152,19 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
     cv.imshow('thresh', threshs[0])
 
     contby = safecont = firstcont = np.array(manual_contour((shwpicts[0]))).reshape((-1, 1, 2))
+
+    filled = cv.fillPoly(np.zeros(picts[0].shape, np.uint8), [contby], 1)
+    intensity = np.sum(picts[0]*filled)
+    meanint = intensity/np.sum(filled)
+    varofint = [intensity]
+    varofmint = [meanint]
+
     cv.namedWindow('contoured_by', cv.WINDOW_NORMAL)
     imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[0], cv.COLOR_GRAY2RGB),
                                 [contby], -1, (0, 0, 255), 3)
     cv.imshow('contoured_by', imgtoshow)
+    print(str(1) + ': N_i = ' + str(contby.shape[0]) + ', intensity = ', str(intensity))
+
     if cv.waitKey(0) == 3:
         cv.imwrite('Output\\' + name + str(1) + '_' + str(wl) + '.tiff', imgtoshow)
         cv.waitKey(0)
@@ -174,15 +183,27 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
             if contby.size <= newcontby.size + n_dots_out*2:
                 imgtoshow = cv.drawContours(cv.cvtColor(shwpicts[i], cv.COLOR_GRAY2RGB),
                                             [newcontby], -1, (0, 0, 255), 3)
+                filled = cv.fillPoly(np.zeros(picts[i].shape, np.uint8), [newcontby], 1)
+                intensity = np.sum(picts[i] * filled)
+                meanint = intensity / np.sum(filled)
+                varofint.append(intensity)
+                varofmint.append(meanint)
                 safecont, contby = contby, newcontby
                 n_bad_pictures = n_laz_pictures = add_because_lazer = 0
                 n_sum += n_i
+                print(str(i + 1) + ': N_i = ' + str(newcontby.shape[0]) + ', n_i = ' + str(n_i) + ', n_s = '
+                      + str(n_sum) + ', intensity = ', str(intensity))
             else:
                 imgtoshow = shwpicts[i]
+                varofint.append(0)
+                varofmint.append(0)
                 n_bad_pictures = n_bad_pictures + 1
-            print(str(i + 1) + ': N_i = ' + str(newcontby.shape[0]) + ', n_i = ' + str(n_i) + ', n_s = ' + str(n_sum))
+                print(str(i + 1) + ': N_i = ' + str(newcontby.shape[0]) + ', n_i = ' + str(n_i) +
+                      ', n_s = ' + str(n_sum))
         else:
             imgtoshow = shwpicts[i]
+            varofint.append(0)
+            varofmint.append(0)
             n_laz_pictures = n_laz_pictures + 1
             if not add_because_lazer and n_bad_pictures:
                 add_because_lazer = n_bad_pictures
@@ -201,6 +222,21 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
                                                   [firstcont], -1, (0, 0, 255), 3))
         if cv.waitKey(0) == 3:
             cv.imwrite('Output\\' + name + str(1) + '_' + str(wl) + '.tiff', imgtoshow)
+
+    plt.figure(1)
+    plt.plot(range(1, len(varofint)+1), varofint)
+    plt.ylim(0, varofint[0]*1.2)
+    plt.xlim(left=1)
+    plt.axhline(y=varofint[0]*1.1, color='r', linestyle='--')
+    plt.axhline(y=varofint[0]*0.9, color='r', linestyle='--')
+
+    plt.figure(2)
+    plt.plot(range(1, len(varofmint) + 1), varofmint)
+    plt.ylim(0, varofmint[0] * 1.2)
+    plt.xlim(left=1)
+    plt.axhline(y=varofmint[0] * 1.1, color='r', linestyle='--')
+    plt.axhline(y=varofmint[0] * 0.9, color='r', linestyle='--')
+    plt.show()
 
 
 # poly = [[x1,y1],...] = man_con()
