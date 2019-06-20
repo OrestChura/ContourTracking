@@ -160,8 +160,11 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
     n_bad_pictures = n_laz_pictures = add_because_lazer = 0
     n_sum = 0
     print(str(1) + ': N_i = ' + str(contby.shape[0]))
-    for i in range(1, len(threshs) - 1):
+    for i in range(1, len(threshs)):
         cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
+        
+        cv.setWindowTitle('thresh', 'thresh' + str(i + 1))
+        cv.imshow('thresh', threshs[i])
 
         if np.sum(cv.calcHist([picts[i]], [0], None, [256], [0, 256])[230:]) < 30:
             newcontby = tracktwopicts(threshs[i - n_bad_pictures - n_laz_pictures - 1], contby, threshs[i],
