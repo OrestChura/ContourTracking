@@ -161,7 +161,7 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
         cv.waitKey(0)
     n_bad_pictures = n_laz_pictures = add_because_lazer = 0
     n_sum = 0
-    for i in range(1, len(threshs) - 1):
+    for i in range(1, len(threshs)):
         cv.setWindowTitle('contoured_by', 'contoured_by' + str(i + 1))
         
         cv.setWindowTitle('thresh', 'thresh' + str(i + 1))
@@ -180,7 +180,7 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
             else:
                 imgtoshow = shwpicts[i]
                 n_bad_pictures = n_bad_pictures + 1
-                print(str(i + 1) + ': N_i = ' + str(newcontby.shape[0]) + ', n_i = ' + str(n_i) + ', n_s = ' + str(n_sum))
+            print(str(i + 1) + ': N_i = ' + str(newcontby.shape[0]) + ', n_i = ' + str(n_i) + ', n_s = ' + str(n_sum))
         else:
             imgtoshow = shwpicts[i]
             n_laz_pictures = n_laz_pictures + 1
