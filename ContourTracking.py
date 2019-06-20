@@ -1,8 +1,8 @@
 from funcs import *
 
-trackseries_n_compare(wsize=(90, 90), maxlvl=6, delta=30, compare=True, name='3__3__', wl=400, end=192)
+trackseries_n_compare(wsize=(90, 90), maxlvl=6, delta=30, max_bad_pictures=10,
+                      n_dots_out=5, compare=True, name='3__3__', wl=400, end=192)
 
-# trackseries(picts, threshs, conts)
 
 # TODO: возможно, использ. эту ф-ю
 # cv.goodFeaturesToTrack() - функция для отыскания углов
