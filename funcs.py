@@ -194,15 +194,15 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
                       + str(n_sum) + ', intensity = ', str(intensity))
             else:
                 imgtoshow = shwpicts[i]
-                varofint.append(0)
-                varofmint.append(0)
+                varofint.append(intensity)
+                varofmint.append(intensity)
                 n_bad_pictures = n_bad_pictures + 1
                 print(str(i + 1) + ': N_i = ' + str(newcontby.shape[0]) + ', n_i = ' + str(n_i) +
                       ', n_s = ' + str(n_sum))
         else:
             imgtoshow = shwpicts[i]
-            varofint.append(0)
-            varofmint.append(0)
+            varofint.append(intensity)
+            varofmint.append(intensity)
             n_laz_pictures = n_laz_pictures + 1
             if not add_because_lazer and n_bad_pictures:
                 add_because_lazer = n_bad_pictures
@@ -224,17 +224,19 @@ def trackseries_n_compare(wsize, maxlvl, delta, max_bad_pictures, n_dots_out, na
 
     plt.figure(1)
     plt.plot(range(1, len(varofint)+1), varofint)
-    plt.ylim(0, varofint[0]*1.2)
+    plt.ylim(varofint[0]*0.9, varofint[0]*1.1)
     plt.xlim(left=1)
-    plt.axhline(y=varofint[0]*1.1, color='r', linestyle='--')
-    plt.axhline(y=varofint[0]*0.9, color='r', linestyle='--')
 
-    plt.figure(2)
-    plt.plot(range(1, len(varofmint) + 1), varofmint)
-    plt.ylim(0, varofmint[0] * 1.2)
-    plt.xlim(left=1)
-    plt.axhline(y=varofmint[0] * 1.1, color='r', linestyle='--')
-    plt.axhline(y=varofmint[0] * 0.9, color='r', linestyle='--')
+    print((float((np.sum([(i-varofint[0])**2 for i in varofint]))/len(varofint))**(1/2))*100/varofint[0])
+    # plt.axhline(y=varofint[0]*1.1, color='r', linestyle='--')
+    # plt.axhline(y=varofint[0]*0.9, color='r', linestyle='--')
+
+    # plt.figure(2)
+    # plt.plot(range(1, len(varofmint) + 1), varofmint)
+    # plt.ylim(0, varofmint[0] * 1.2)
+    # plt.xlim(left=1)
+    # plt.axhline(y=varofmint[0] * 1.1, color='r', linestyle='--')
+    # plt.axhline(y=varofmint[0] * 0.9, color='r', linestyle='--')
     plt.show()
 
 
