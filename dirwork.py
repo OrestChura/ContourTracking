@@ -20,12 +20,17 @@ def callback():
             i_0 = 1
             i_400 = 1
             i_660 = 1
+            i_740 = 1
             for f in files:
                 if not (f[-3:] == 'pkl'):
                     if f[-7:-5] == '_0':
                         sh.copy2(f, s + str(i_0) + '_0.tiff')
                         sh.move(s + str(i_0) + '_0.tiff', direc)
                         i_0 += 1
+                    elif f[-9:-5] == '_740':
+                        sh.copy2(f, s + str(i_740) + '_740.tiff')
+                        sh.move(s + str(i_740) + '_740.tiff', direc)
+                        i_740 += 1
                     elif f[-9:-5] == '_400' and f[-10] != 'n' and q400:
                         sh.copy2(f, s + str(i_400) + '_400.tiff')
                         sh.move(s + str(i_400) + '_400.tiff', direc)
@@ -34,8 +39,6 @@ def callback():
                         sh.copy2(f, s + str(i_660) + '_660.tiff')
                         sh.move(s + str(i_660) + '_660.tiff', direc)
                         i_660 += 1
-                    else: pass
-                else: pass
 
             root.destroy()
     else:
